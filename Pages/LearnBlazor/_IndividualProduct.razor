@@ -1,0 +1,36 @@
+﻿@using Tangy_Models.LearnBlazorModels;
+
+<MudPaper Height="400px" Width="100%" Square="false" @onclick="(args)=> LastSelectedChangeUpdated(args, Product.Name)">
+    <MudCheckBox Label="Add Favorites" T="bool" @onchange="FavoriteUpdated"   Size="Size.Small" Color="Color.Success"></MudCheckBox>
+    <MudText Color="Color.Info" Typo="Typo.h4">Product Id : @Product.Id</MudText>
+    <MudText>Product Name : @Product.Name</MudText>
+    <MudCheckBox Label="Show Properties" @bind-Checked="@Product.IsActive" Size="Size.Medium" Color="Color.Dark"></MudCheckBox>
+    @if (Product.IsActive)
+        {
+        foreach (var prod in Product.ProductProperties)
+            {
+                <MudText>@prod.Value</MudText>
+                <MudDivider></MudDivider>
+                <MudText>@prod.Key</MudText>
+            }
+        }
+    <_EditDeleteButton IsActive="@Product.IsActive"></_EditDeleteButton>
+    </MudPaper>
+@code {
+    [Parameter]
+    public Demo_Product Product { get; set; }
+    [Parameter]
+    public EventCallback<bool> OnFavoriteChange { get; set; }
+    [Parameter]
+    public EventCallback<string> OnLastSelectedChange { get; set; }
+
+    private async Task FavoriteUpdated( Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        await OnFavoriteChange.InvokeAsync((bool)e.Value);
+    }
+    private async Task LastSelectedChangeUpdated(MouseEventArgs mouseEventArgs, string name)
+    {
+        await OnLastSelectedChange.InvokeAsync(name);
+    }
+
+}

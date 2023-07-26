@@ -1,0 +1,47 @@
+﻿@page "/upload"
+@inject IFileUpload _fileUploadService
+@attribute [Authorize]
+<MudFileUpload T="IBrowserFile" OnFilesChanged="UploadFiles">
+    <ButtonTemplate>
+        <MudIconButton HtmlTag="label"
+                       Color="Color.Info"
+                       Icon="@Icons.Material.Filled.PhotoCamera"
+                       for="@Product.Image">Upload File
+        </MudIconButton>
+    </ButtonTemplate>
+</MudFileUpload>
+
+@code {
+    [CascadingParameter]
+    public ProductDTO Product { get; set; } = new ProductDTO();
+    IList<IBrowserFile> files = new List<IBrowserFile>();
+    private async Task UploadFiles(InputFileChangeEventArgs args)
+    {
+        try
+        {
+            if (args.GetMultipleFiles().Count() > 0)
+            {
+                foreach (var file in args.GetMultipleFiles())
+                {
+                    System.IO.FileInfo fileInfo = new FileInfo(file.Name);
+                    if (fileInfo.Extension.ToLower() == ".png" ||
+                        fileInfo.Extension.ToLower() == ".jpg" ||
+                    fileInfo.Extension.ToLower() == ".jpeg")
+                    {
+                        Product.ImageUrl = await _fileUploadService.UploadFile(file);
+                        Product.Image = file;
+                        StateHasChanged();
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+    }
+
+}
+
+

@@ -1,0 +1,34 @@
+﻿@page "/learnblazor/blazorjs"
+
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+     <MudStack Justify="Justify.SpaceEvenly" AlignItems="AlignItems.Stretch" Row="true">
+         <MudPaper>
+        <MudButton OnClick="TestConfirmBoxClicked" Variant="Variant.Filled" Color="Color.Info">Confirm</MudButton>
+        <MudText>@state</MudText>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="@AddSnackbar">
+            Show State in SnackBar
+        </MudButton>
+         </MudPaper>
+     </MudStack>
+@code {
+
+    string state = "Message box hasn't been opened yet";
+
+
+    private async void TestConfirmBoxClicked()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+        state = result == null ? "Canceled" : "Deleted!";
+        StateHasChanged();
+    }
+    private void AddSnackbar()
+    {
+        Snackbar.Add(state, Severity.Normal);
+    }
+}

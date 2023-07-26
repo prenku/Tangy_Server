@@ -1,0 +1,183 @@
+﻿@page "/product/create"
+@page "/product/edit/{id:int}"
+
+@using System.ComponentModel.DataAnnotations
+@using MudBlazor
+@using TangyWeb_Server.Service.IService;
+@inject NavigationManager _navigation
+@inject IProductRepository _productRepository
+@inject ICatergoryRepository _categoryRepository
+@inject IFileUpload _fileUploadService
+@inject ISnackbar _snackbar
+@attribute [Authorize]
+
+@if (IsLoading)
+{
+    <MudImage Fluid="true" ObjectPosition="ObjectPosition.Center" Src="images/Spinner-2.gif" Elevation="0" Class=" rounded-lg" />
+}
+else
+{
+
+    <EditForm Model="@Product" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+        <MudText Typo="Typo.h3">@Title Product</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="7">
+                <MudCard>
+                    <MudCardContent>
+                        <MudTextField Label="Name"
+                                  @bind-Value="@Product.Name" For="@(() => Product.Name)" />
+                        <MudTextField Label="Description"
+                                  @bind-Value="Product.Description" For="@(() => Product.Description)" />
+                        <SfRichTextEditor @bind-Value="Product.Description">
+                            <RichTextEditorImageSettings SaveFormat="SaveFormat.Blob" Path="/images/"></RichTextEditorImageSettings>
+                        </SfRichTextEditor>
+                        <MudTextField Label="Color"
+                                  @bind-Value="Product.Color" For="@(() => Product.Color)" />
+                   
+                        <MudCheckBox Label="Show ShopFavorites" @bind-Checked="@Product.ShopFavorites" Size="Size.Medium" Color="Color.Dark"></MudCheckBox>
+                        <MudCheckBox Label="Show CustomerFavorites" @bind-Checked="@Product.CustomerFavorites" Size="Size.Medium" Color="Color.Dark"></MudCheckBox>
+                     
+                        <InputFile @bind-Value="Product.ImageUrl" OnChange="UploadFiles"></InputFile>
+
+                   
+                        <MudSelect  T="CategoryDTO" @bind-Value="Product.Category" @bind-SelectedValues="@SelectedCategories" Label="Category" AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var item in Categories)
+                                {
+                                <MudSelectItem Value="item">@item.Name</MudSelectItem>
+                                }
+                        </MudSelect>
+
+
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">
+                            @ButtonText
+                        </MudButton>
+                        <MudButton OnClick="Back" ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Default">Back</MudButton>
+
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="5">
+                @if (!string.IsNullOrEmpty(Product.ImageUrl))
+                {
+                    <MudImage Fluid="true" Src="@Product.ImageUrl"></MudImage>
+                }
+            </MudItem>
+            <MudItem xs="12">
+                
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private ProductDTO Product { get; set; } = new ProductDTO();
+    private IEnumerable<CategoryDTO> Categories = new List<CategoryDTO>();
+    private string? ButtonText;
+    private IEnumerable<CategoryDTO> SelectedCategories = new List<CategoryDTO>();
+    private string Title { get; set; } = "Create";
+    private bool IsLoading;
+    private bool DeleteIdConfirmed = false;
+
+    IList<IBrowserFile> files = new List<IBrowserFile>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Categories = await _categoryRepository.GetAll();
+    }
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Id == 0)
+            {
+                IsLoading = false;
+                ButtonText = "Create";
+                StateHasChanged();
+            }
+            else
+            {
+                IsLoading = true;
+                Title = "Edit";
+                ButtonText = "Save Changes";
+                StateHasChanged();
+                await LoadProduct();
+                StateHasChanged();
+            }
+        }
+    }
+    private void AssginImage(IBrowserFile file)
+    {
+        Product.Image = file;
+    }
+    private async void OnValidSubmit(EditContext context)
+    {
+        if (Product.Id == 0)
+        {
+            await _productRepository.Create((ProductDTO)context.Model);
+            _snackbar.Add($"{Product.Name} was created succsessfully", Severity.Success);
+
+        }
+        else
+        {
+            await _productRepository.Update((ProductDTO)context.Model);
+            _snackbar.Add($"{Product.Name} was saved succsessfully", Severity.Success);
+
+        }
+        Back();
+    }
+    private void Back()
+    {
+        _navigation.NavigateTo("product");
+    }
+    private async Task LoadProduct()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        Product = await _productRepository.Get(Id);
+        Categories = await _categoryRepository.GetAll();
+        IsLoading = false;
+        StateHasChanged();
+    }     
+    private async Task  UploadFiles(InputFileChangeEventArgs args)
+    {
+
+        try
+        {
+            if (args.GetMultipleFiles().Count()>0)
+            {
+                foreach (var file in args.GetMultipleFiles())
+                {
+                    System.IO.FileInfo fileInfo = new FileInfo(file.Name);
+                    if (fileInfo.Extension.ToLower() ==".png"  ||
+                        fileInfo.Extension.ToLower() == ".jpg" ||
+                        fileInfo.Extension.ToLower() == ".jpeg")
+                    {
+                        if (!string.IsNullOrEmpty(Product.ImageUrl) && !Product.ImageUrl.ToLower().Contains("default.png"))
+                        {
+                            _fileUploadService.DeleteFile(Product.ImageUrl);
+                            Product.ImageUrl = string.Empty;
+                            StateHasChanged();
+                        }
+                        if (Product.ImageUrl == string.Empty)
+                        {
+                            Product.ImageUrl = await _fileUploadService.UploadFile(file);
+                        }
+
+                        StateHasChanged();
+                    }
+                }
+            }
+        }
+        catch (Exception e) 
+        {
+
+            _snackbar.Add(e.Message,Severity.Error);
+        }
+    }
+}

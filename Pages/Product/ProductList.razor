@@ -1,0 +1,136 @@
+﻿@page "/product"
+@inject NavigationManager _navigation
+@inject IDialogService _dialogService
+@inject IProductRepository _productRepository
+@inject IFileUpload _fileUploadService
+@using Tangy_Common
+
+@if (IsLoading)
+{       
+    <MudImage  Fluid="true" ObjectPosition="ObjectPosition.Center" Src="images/Spinner-2.gif" Elevation="0" Class=" rounded-lg" />
+}
+else
+{
+         
+<h3>Product List</h3>
+    <MudStack Justify="Justify.SpaceBetween" Row="true" AlignItems="AlignItems.Stretch">
+            @if (Products.Any())
+            {
+                <MudPaper Elevation="5" Height="auto" Width="100%" Square="false" Class="mud-theme-default">
+                    <MudTable Items="@Products" Hover="true" Breakpoint="Breakpoint.Sm">
+                        <HeaderContent>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Category</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Name">@context.Name</MudTd>
+                            <MudTd DataLabel="Category">@context.Category.Name</MudTd>
+                            <MudTd DataLabel="Actions">
+                                <MudButton OnClick="()=> Edit(context.Id)" ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Info" Class="ml-auto">Edit</MudButton>
+                                <MudButton OnClick="()=> Price(context.Id)" ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Warning" Class="ml-auto">Price</MudButton>
+
+                                <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="()=>OnButtonClicked(context.Id)">Delete</MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+
+                <MudPaper Height="auto" Width="100%" Elevation="5" Square="false" Class="mud-theme-default">
+                    <MudButton OnClick="NavigateToCreate" ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary" Class="ml-10 mt-4">Add New Product</MudButton>
+        </MudPaper>
+       } 
+    </MudStack>
+}
+@code {
+    private IEnumerable<ProductDTO> Products { get; set; } = new List<ProductDTO>();
+    private bool IsLoading { get; set; } = true;
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationState { get; set; }
+    private DialogOptions dialogOptions { get; set; } = new DialogOptions
+        {
+            DisableBackdropClick
+         = true
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationState;
+
+        var url = new Uri(_navigation.Uri);
+        if (!authState.User.Identity.IsAuthenticated)
+        {
+            _navigation.NavigateTo($"/Identity/Account/Login?returnUrl={ url.LocalPath}", forceLoad:true);
+        }
+        else
+        {
+            if (!authState.User.IsInRole(SD.Role_Admin))
+            {
+                _navigation.NavigateTo($"/ErrorPage", forceLoad: true);
+
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var authState = await AuthenticationState;
+        if (authState.User.IsInRole(SD.Role_Admin))
+        {
+            if (firstRender)
+            {
+                await LoadProducts();
+            }
+
+        }
+    }
+    private void NavigateToCreate()
+    {
+        _navigation.NavigateTo("product/create");
+
+    }
+    private void Edit(int id)
+    {
+        _navigation.NavigateTo($"product/edit/{id}");
+    }
+    private void Price (int id)
+    {
+        _navigation.NavigateTo($"product/price/{id}");
+    }
+    private async Task LoadProducts()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        Products = await _productRepository.GetAll();
+        IsLoading = false;
+        StateHasChanged();
+    }
+    private async void OnButtonClicked(int id)
+    {
+        string state;
+        bool? result = await _dialogService.ShowMessageBox(
+        "Warning",
+        "Deleting can not be undone!",
+        yesText: "Delete!", cancelText: "Cancel");
+        state = result == null ? "Cancel" : "Delete";
+        if (state == "Delete")
+        {
+            ProductDTO prod = await _productRepository.Get(id);
+            if (prod.ImageUrl != null && !prod.ImageUrl.Contains("default.png") )
+            {
+                  _fileUploadService.DeleteFile(prod.ImageUrl);
+            }
+            var deleted = await _productRepository.Delete(id);
+            if (deleted >0)
+            {
+                await LoadProducts();
+                StateHasChanged();
+            }
+        }
+    }
+    private void UploadFiles(IBrowserFile file)
+    {
+        
+    }
+
+}

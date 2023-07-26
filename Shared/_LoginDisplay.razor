@@ -1,0 +1,14 @@
+﻿<AuthorizeView>
+    <Authorized>
+        <MudText Class="mr-4" Typo="Typo.h6">Hello, @context.User.Identity.Name </MudText>
+        <MudButton Style="text-transform:none" Href="Identity/Account/Logout" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Logout" Color="Color.Inherit" Size="Size.Small">Logout</MudButton>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton Style="text-transform:none" Href="Identity/Account/Register" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Portrait" Color="Color.Inherit" class="mr-4" Size="Size.Small">Register</MudButton>
+        <MudButton Style="text-transform:none" Href="Identity/Account/Login" Variant="Variant.Text" StartIcon="@Icons.Material.Outlined.Login" Color="Color.Inherit" Size="Size.Small">Login</MudButton>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+}

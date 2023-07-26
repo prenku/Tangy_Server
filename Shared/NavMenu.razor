@@ -1,5 +1,15 @@
 ﻿<MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
-    <MudNavLink Href="fetchdata" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Fetch data</MudNavLink>
+    <MudNavLink Href="learnblazor/bindprop" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Approval">Bind Props</MudNavLink>
+    <MudNavLink Href="learnblazor/blazorjs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Approval">Blazor Js</MudNavLink>
+    <MudNavLink Href="lifecycle" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Nightlife">Blazor Lifecycle</MudNavLink>
+  <AuthorizeView Roles="@roleAdmin">
+    <MudNavLink Href="category" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Nightlife">Categories</MudNavLink>
+    <MudNavLink Href="product" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Nightlife">Products</MudNavLink>
+  </AuthorizeView>
+
 </MudNavMenu>
+
+@code{
+    private string roleAdmin = Tangy_Common.SD.Role_Admin;
+}

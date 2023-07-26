@@ -1,0 +1,114 @@
+﻿@page "/category/create"
+@page "/category/edit/{id:int}"
+
+@inject NavigationManager _navigation
+@inject ICatergoryRepository _categoryRepository
+@inject IDialogService _dialogService
+@inject ISnackbar _snackbar
+@attribute [Authorize]
+
+
+@if (IsLoading)
+    {
+    <MudImage Fluid="true" ObjectPosition="ObjectPosition.Center" Src="images/Spinner-2.gif" Elevation="0" Class=" rounded-lg" />
+}
+else
+{
+    <EditForm Model="@Category" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+        <MudText Typo="Typo.h3">@Title Category</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="7">
+                <MudCard>
+                    <MudCardContent>
+                        <MudTextField Label="Name"
+                              @bind-Text="@Category.Name"    @bind-Value="@Category.Name" For="@(() => Category.Name)">@Category.Name</MudTextField>
+                        
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">
+                            @ButtonText
+                        </MudButton>
+                        <MudButton OnClick="Back" ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Default">Back</MudButton>
+
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+              </MudGrid>
+    </EditForm>
+
+}
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private CategoryDTO Category { get; set; } = new CategoryDTO();
+    private bool IsLoading { get; set; }
+    private DialogOptions dialogOptions { get; set; } = new DialogOptions
+        {
+            DisableBackdropClick= true
+        };
+    private string ButtonText { get; set; } = "Create";
+    private string Title { get; set; } = "Create";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            if (Id == 0)
+            {
+                IsLoading = false;
+                ButtonText = "Create";
+                StateHasChanged();
+            }
+            else
+            {
+                IsLoading = true;
+                Title = "Edit";
+                ButtonText = "Save Changes";
+                StateHasChanged();
+                await LoadCategory();
+                StateHasChanged();
+
+            }
+
+        }
+    }
+    private void NavigateToCreate()
+    {
+        _navigation.NavigateTo("category/create");
+
+    }
+    private void Edit(int id)
+    {
+        _navigation.NavigateTo($"category/edit/{id}");
+    }
+    private async Task LoadCategory()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        Category = await _categoryRepository.Get(Category.Id);
+        IsLoading = false;
+        StateHasChanged();
+    }
+    private async void OnValidSubmit(EditContext context)
+    {
+        if (Category.Id == 0)
+        {
+            await _categoryRepository.Create((CategoryDTO)context.Model);
+            _snackbar.Add($"{Category.Name} was created succsessfully", Severity.Success);
+
+        }
+        else
+        {
+            await _categoryRepository.Update((CategoryDTO)context.Model);
+            _snackbar.Add($"{Category.Name} was saved succsessfully", Severity.Success);
+
+        }
+        Back();
+    }
+    private void Back()
+    {
+        _navigation.NavigateTo("category");
+    }
+}

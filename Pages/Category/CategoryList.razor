@@ -1,0 +1,96 @@
+﻿@page "/category"
+@inject NavigationManager _navigation
+@inject ICatergoryRepository _categoryRepository
+@inject IDialogService _dialogService
+@using Tangy_Common
+@attribute [Authorize (Roles = SD.Role_Admin)]
+
+<h3>Category List</h3>
+
+@if (IsLoading)
+    {
+    <MudImage Fluid="true" ObjectPosition="ObjectPosition.Center" Src="images/Spinner-2.gif" Elevation="0" Class=" rounded-lg" />
+    }
+else
+{
+
+<MudStack  Row="true" AlignItems="AlignItems.Stretch">
+    <MudItem sm="12">
+        <MudPaper  Elevation="5" Height="auto" Width="100%" Square="false" Class="mud-theme-default">
+            <MudTable Items="@Categories" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudButton OnClick="()=> Edit(context.Id)" ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Info" Class="ml-auto">Edit</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="()=>OnButtonClicked(context.Id)">Delete</MudButton>
+
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+
+        </MudPaper>
+    </MudItem>
+        <MudItem sm="12">
+
+        <MudPaper Elevation="5" Height="auto" Width="100%" Square="false" Class="mud-theme-default">
+            <MudButton OnClick="NavigateToCreate" ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto mt-4">Add New Category</MudButton>
+
+        </MudPaper>
+        </MudItem>
+
+    </MudStack>
+    }
+@code {
+    private IEnumerable<CategoryDTO>? Categories { get; set; }
+    private bool IsLoading { get; set; }
+    private DialogOptions dialogOptions {get;set;} = new DialogOptions { DisableBackdropClick
+ = true};
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+           await LoadCategories();
+        }
+    }
+    private void NavigateToCreate()
+    {
+        _navigation.NavigateTo("category/create");
+
+    }
+    private void Edit(int id)
+    {
+        _navigation.NavigateTo($"category/edit/{id}");
+    }
+    private async Task LoadCategories()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        Categories = await _categoryRepository.GetAll();
+        IsLoading = false;
+        StateHasChanged();
+    }
+    private async void OnButtonClicked(int id)
+    {
+        string state;
+        bool? result = await _dialogService.ShowMessageBox(
+        "Warning",
+        "Deleting can not be undone!",
+        yesText: "Delete!", cancelText: "Cancel");
+        state = result == null ? "Cancel" : "Delete";
+        if (state == "Delete")
+        {
+            var deleted = _categoryRepository.Delete(id);
+            if (deleted != null)
+            {
+                await LoadCategories();
+                StateHasChanged();
+            }
+        }
+    }
+
+}

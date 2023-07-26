@@ -1,6 +1,11 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
+﻿<CascadingAuthenticationState>
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+            <NotAuthorized>
+                <MudText Typo="Typo.button" Color="Color.Error">uh oh You Are Not Authorized To View This Page</MudText>
+            </NotAuthorized>
+        </AuthorizeRouteView>
     </Found>
     <NotFound>
         <PageTitle>Not found</PageTitle>
@@ -9,3 +14,4 @@
         </LayoutView>
     </NotFound>
 </Router>
+</CascadingAuthenticationState>

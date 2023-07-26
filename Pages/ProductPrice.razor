@@ -1,0 +1,107 @@
+﻿@page "/product/price/{id:int}"
+@inject IProductRepository _productRepository
+@inject IProductPriceRepository _productPriceRepository
+
+
+@if (IsLoading)
+{
+    <MudImage Fluid="true" ObjectPosition="ObjectPosition.Center" Src="images/Spinner-2.gif" Elevation="0" Class=" rounded-lg" />
+}
+else
+{
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderAvatar>
+                <MudAvatar Color="Color.Secondary">I</MudAvatar>
+            </CardHeaderAvatar>
+            <CardHeaderContent>
+                <MudText Typo="Typo.body1">@Product.Name</MudText>
+                <MudText Typo="Typo.body2">Category : @Product.Category.Name</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardMedia Image="@Product.ImageUrl" Height="300" />
+        <MudCardContent>
+            <MudText Typo="Typo.body2">@((MarkupString)Product.Description)</MudText>
+        </MudCardContent>
+        <MudCardActions>
+            <MudIconButton Icon="@Icons.Material.Filled.Favorite" Color="Color.Default" />
+            <MudIconButton Icon="@Icons.Material.Filled.Share" Color="Color.Default" />
+        </MudCardActions>
+    </MudCard>
+   <SfGrid @ref="@_productPriceGrid" DataSource="@ProductPrices" AllowPaging="true" Toolbar="@(new List<string>(){"Add" ,"Edit" ,"Update" , "Delete" ,"Cancel"})">
+    <GridColumns>
+        <GridEditSettings AllowAdding="true" AllowDeleting="true" ShowDeleteConfirmDialog="true" AllowEditing="true" ></GridEditSettings>
+        <GridEvents OnActionBegin="ActionBeginHandler" TValue="ProductPriceDTO"></GridEvents>
+        <GridColumn IsPrimaryKey="true" AllowAdding="false" Field=@nameof(ProductPriceDTO.Id) HeaderText="Id"></GridColumn>
+        <GridColumn Field=@nameof(ProductPriceDTO.Size) HeaderText="Size" Width="150">
+            <EditTemplate><Syncfusion.Blazor.DropDowns.SfDropDownList DataSource="@SizeList" TItem="string" TValue="string" @bind-Value="((context as ProductPriceDTO).Size)">
+
+            </Syncfusion.Blazor.DropDowns.SfDropDownList></EditTemplate>
+        </GridColumn>
+            <GridColumn Field=@nameof(ProductPriceDTO.Price) HeaderText="Price" Format="C2"></GridColumn>
+    </GridColumns>
+   </SfGrid>
+}
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+    private ProductDTO Product { get; set; } = new ProductDTO();
+    private IEnumerable<ProductPriceDTO> ProductPrices { get; set; } = new List<ProductPriceDTO>();
+    private bool IsLoading { get; set; } = true;
+    IEnumerable<String> SizeList = new List<string>()
+    {
+        "Small",
+        "Medium",
+        "Large",
+        "8oz",
+        "16oz",
+        "24oz"
+    };
+    private SfGrid<ProductPriceDTO> _productPriceGrid;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            IsLoading = true;
+            StateHasChanged();
+            Product = await _productRepository.Get(Id);
+            ProductPrices = await _productPriceRepository.GetAll(Product.Id);
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+    private async void ActionBeginHandler(ActionEventArgs<ProductPriceDTO> args)
+    {
+        if (args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            args.Data.ProductId = Id;
+            if (args.Action == "Add")
+            {
+                await _productPriceRepository.Create(args.Data);
+                ProductPrices = await _productPriceRepository.GetAll(Id);
+                await  _productPriceGrid.Refresh();
+            }
+            if (args.Action == "Edit")
+            {
+                await _productPriceRepository.Update(args.Data);
+            }
+        }
+        if (args.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Delete))
+        {
+            args.Data.ProductId = Id;
+
+            if (args.Action == "Delete")
+            {
+                await _productPriceRepository.Delete(args.Data.Id);
+                ProductPrices = await _productPriceRepository.GetAll(Id);
+                await _productPriceGrid.Refresh();
+
+            }    
+        }
+    }
+}

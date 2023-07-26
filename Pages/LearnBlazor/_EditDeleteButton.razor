@@ -1,0 +1,11 @@
+﻿@if (IsActive)
+{
+<MudButton Variant="Variant.Filled" Size="Size.Small" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error">Delete</MudButton>
+<MudButton Variant="Variant.Filled" Size="Size.Small" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Primary">Edit</MudButton>
+}
+
+
+@code {
+    [Parameter]
+    public bool IsActive { get; set; }
+}

@@ -1,0 +1,162 @@
+﻿@page "/learnblazor/bindprop"
+@using Tangy_Models.LearnBlazorModels;
+
+
+<MudGrid>
+        @if (ShowProperties)
+        {
+            <MudItem >
+
+
+            <MudStack Row="true" AlignItems="AlignItems.Stretch">
+                <MudPaper Height="400px" Width="100%" Square="false">
+
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Class="mud-width-full" Align="Align.Start" Style="margin-bottom:20px" Typo="Typo.h4" Color="Color.Info">Product Summary</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText>
+                                Name : @Product.Name <br>
+                                IsActive : @Product.IsActive <br />
+                                Price : @Product.Price <br />
+                                <MudText>This Product is : @(
+                                Product.IsActive ? "Active" : "Inactive"
+                                ) </MudText>
+
+                                Property Selected : @if (!string.IsNullOrWhiteSpace(ProductPropMudSelectValue.Key))
+                                {
+                                    @ProductPropMudSelectValue.Key
+                                }
+                                <br />
+                                Property Value :@if (!string.IsNullOrWhiteSpace(ProductPropMudSelectValue.Value))
+                                {
+                                    @ProductPropMudSelectValue.Value
+                                }
+                            </MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary">Read More</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudPaper>
+                <MudPaper Height="400px" Width="100%" Square="false">
+
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Class="mud-width-full" Align="Align.Start" Style="margin-bottom:20px" Color="Color.Info" Typo="Typo.h4">Product List</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudText>
+                                Price <input type="number" @bind-value="@Product.Price" @bind-value:event="oninput" />
+                                <MudSelect Placeholder="Select size" @bind-Value="ProductPropMudSelectValue" HelperText="Sizes" ToStringFunc="@convertFunc" CloseIcon="@Icons.Material.Filled.Flag" AdornmentColor="Color.Tertiary">
+                                    @foreach (var item in Product.ProductProperties)
+                                    {
+                                        <MudSelectItem Value="@item" />
+                                    }
+                                </MudSelect>
+                                <MudText>
+                                    Active : <MudCheckBox @bind-Checked="@Product.IsActive" Size="Size.Large" Color="Color.Dark"></MudCheckBox>
+                                </MudText>  
+                            </MudText>
+                            <MudText Typo="Typo.body2">The quick, brown fox jumps over a lazy dog.</MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary">Read More</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudPaper>
+            </MudStack>
+            </MudItem>
+        }
+
+     <MudStack Justify="Justify.SpaceEvenly" AlignItems="AlignItems.Stretch" Row="true">
+        <MudText>Last Product  is : @LastSelectedProduct</MudText>
+        <br />
+        <MudText>Favourites Count is : @SelectedFavouritesCount</MudText>
+        <br/>
+        @foreach (var item in Products)
+            {
+            <_IndividualProduct Product="item" OnLastSelectedChange="LastSelectedProductUpdate" OnFavoriteChange="FavouriteCountUpdate"></_IndividualProduct>
+            }
+     </MudStack>
+</MudGrid>
+@code {
+    private bool ShowProperties = false;
+    private Tangy_Models.LearnBlazorModels.Demo_Product Product = new()
+        {
+            Id = 1,
+            Name = "Rose Candle",
+            IsActive = true,
+            Price = 10.99,
+            ProductProperties = new List<Tangy_Models.LearnBlazorModels.Demo_ProductProp>()
+            {
+                new Demo_ProductProp { Id=1, Key="Color",Value="Black"},
+                new Demo_ProductProp { Id=2, Key="Flavour",Value="Rose Jasmine"},
+                new Demo_ProductProp { Id=3, Key="Size",Value="20z"}
+            }
+        };
+
+    private Demo_ProductProp ProductPropMudSelectValue { get; set; }
+    private Func<Demo_ProductProp, string> convertFunc = dpp => dpp?.Value;
+    private List<Demo_Product> Products = new List<Demo_Product>();
+    private int SelectedFavouritesCount { get; set; }
+    private string LastSelectedProduct { get; set; }
+    protected override void OnInitialized()
+    {
+        ProductPropMudSelectValue = Product?.ProductProperties?.FirstOrDefault();
+
+
+        Products.Add(new Demo_Product()
+            {
+                Id = 1,
+                Name = "Midnight Blaze",
+                IsActive = false,
+                ProductProperties = new List<Demo_ProductProp>()
+                {
+                    new Demo_ProductProp { Id = 1, Key = "Flavor", Value = "Rose"},
+                     new Demo_ProductProp { Id = 2, Key = "Size", Value = "20oz"},
+                    new Demo_ProductProp { Id = 3, Key = "Color", Value="Purple" }
+                }
+            });
+
+        Products.Add(new Demo_Product()
+            {
+                Id = 2,
+                Name = "Blossom Lily",
+                IsActive = true,
+                ProductProperties = new List<Demo_ProductProp>()
+            {
+                new Demo_ProductProp { Id = 1, Key = "Flavor", Value = "Lily" },
+                new Demo_ProductProp { Id = 2, Key = "Size", Value = "18oz" },
+                new Demo_ProductProp {Id = 3,Key = "Color",Value = "White"}
+            }
+            });
+    }
+
+    protected void FavouriteCountUpdate(bool isSelected)
+    {
+        if (isSelected)
+        {
+            SelectedFavouritesCount++;
+        }
+        else
+        {
+            SelectedFavouritesCount--;
+        }
+    }
+    protected void LastSelectedProductUpdate(string name)
+    {
+        LastSelectedProduct = name;
+    }
+}

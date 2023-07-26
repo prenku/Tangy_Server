@@ -1,0 +1,30 @@
+﻿<MudText Class="mb-10 mt-10" Typo="Typo.h3">_LifeCycleChild</MudText>
+
+@foreach (var item in EventType)
+{
+    <MudText Color="Color.Error" Class="mb-4">EventType: @item</MudText>
+}
+
+@code {
+
+    private List<string> EventType = new List<string>();
+    protected override void OnInitialized()
+    {
+        EventType.Add("_LifeCycleChild OnInitialized is called");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        EventType.Add("_LifeCycleChild OnInitializedAsync is called");
+        await Task.Delay(1000);
+    }
+    protected override void OnParametersSet()
+    {
+        EventType.Add("_LifeCycleChild OnParametersSet is called");
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        EventType.Add("_LifeCycleChild OnParametersSetAsync is called");
+        await Task.Delay(1000);
+    }
+}
